@@ -46,6 +46,7 @@ async function DocumentBeforesave(request) {
       }
     }
   } catch (err) {
+    console.log('err in document beforesave', err.message);
     debugLog(
       '[PLACEHOLDER_DEBUG] DocumentBeforesave error',
       JSON.stringify({ documentId: request?.object?.id, message: err?.message })

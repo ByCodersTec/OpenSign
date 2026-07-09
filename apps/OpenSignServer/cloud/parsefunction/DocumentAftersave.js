@@ -51,7 +51,7 @@ async function DocumentAftersave(request) {
       }
     }
   } catch (err) {
-    debugLog('err in aftersave of contracts_Document');
+    console.log('err in aftersave of contracts_Document');
     debugLog(
       '[PLACEHOLDER_DEBUG] DocumentAftersave error',
       JSON.stringify({ documentId: request?.object?.id, requestUserId, message: err?.message })

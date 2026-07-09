@@ -38,6 +38,7 @@ async function getUserDetails(request) {
         return '';
       }
     } catch (err) {
+      console.log('Err ', err);
       debugLog(
         '[PLACEHOLDER_DEBUG] getUserDetails error',
         JSON.stringify({ requestUserId, message: err?.message })

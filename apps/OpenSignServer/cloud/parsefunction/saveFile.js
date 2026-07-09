@@ -61,7 +61,7 @@ export default async function saveFile(request) {
             '[PLACEHOLDER_DEBUG] saveFile: parseUploadFile (file adapter access) end',
             JSON.stringify({ fileName, durationMs: Date.now() - uploadStartedAt })
           );
-          fileUrl = getSecureUrl(fileRes?.url)?.url;
+          const fileUrl = getSecureUrl(fileRes?.url)?.url;
           debugLog('[PLACEHOLDER_DEBUG] saveFile end', JSON.stringify({ fileName, hasUrl: !!fileUrl }));
           return { url: fileUrl };
         } catch (err) {
@@ -81,7 +81,7 @@ export default async function saveFile(request) {
       throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, 'User is not authenticated.');
     }
   } catch (err) {
-    debugLog('err in savetoS3', err);
+    console.log('err in savetoS3', err);
     debugLog(
       '[PLACEHOLDER_DEBUG] saveFile error',
       JSON.stringify({ fileName: fileNameForLog, requestUserId, message: err?.message })

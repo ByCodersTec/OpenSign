@@ -103,6 +103,7 @@ export async function parseUploadFile(fileName, fileData, mimeType) {
   } catch (err) {
     const errorMessage = err?.response?.data?.error || err?.message || 'Unknown error';
     const statusCode = err?.response?.status || 500;
+    console.log('Err in parseUploadFile', errorMessage);
     debugLog(
       '[PLACEHOLDER_DEBUG] parseUploadFile (file adapter access) error',
       JSON.stringify({ fileName, durationMs: Date.now() - startedAt, statusCode, message: errorMessage })

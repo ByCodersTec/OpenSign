@@ -53,7 +53,7 @@ export default async function getDocument(request) {
               hasTenantId: !!document?.ExtUserPtr?.TenantId,
             })
           );
-          delete document.ExtUserPtr.TenantId.FileAdapters;
+          delete document?.ExtUserPtr?.TenantId?.FileAdapters;
           delete document?.ExtUserPtr?.TenantId?.PfxFile;
           if (!IsEnableOTP) {
             debugLog('[PLACEHOLDER_DEBUG] getDocument end (no OTP)', JSON.stringify({ documentId: docId }));
@@ -83,6 +83,7 @@ export default async function getDocument(request) {
                   return { error: "You don't have access of this document!" };
                 }
               } catch (err) {
+                console.log('err user in not authenticated', err);
                 debugLog(
                   '[PLACEHOLDER_DEBUG] getDocument /users/me error',
                   JSON.stringify({ documentId: docId, message: err?.message })
@@ -100,6 +101,7 @@ export default async function getDocument(request) {
           return { error: "document deleted or you don't have access." };
         }
       } catch (err) {
+        console.log('err', err);
         debugLog(
           '[PLACEHOLDER_DEBUG] getDocument inner error',
           JSON.stringify({ documentId: docId, message: err?.message })
@@ -112,6 +114,7 @@ export default async function getDocument(request) {
       return { error: 'Please pass required parameters!' };
     }
   } catch (err) {
+    console.log('err', err);
     debugLog(
       '[PLACEHOLDER_DEBUG] getDocument outer error',
       JSON.stringify({ documentId: docId, message: err?.message })

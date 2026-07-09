@@ -55,6 +55,7 @@ async function getTenantByUserId(userId, contactId) {
       }
     }
   } catch (err) {
+    console.log('err in getTenant ', err);
     debugLog(
       '[PLACEHOLDER_DEBUG] getTenant error',
       JSON.stringify({ userId, contactId, message: err?.message })

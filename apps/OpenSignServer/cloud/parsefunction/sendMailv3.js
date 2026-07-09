@@ -94,7 +94,7 @@ async function sendMailProvider(req) {
       }
     }
   } catch (err) {
-    debugLog(`sendmailv3 Error: ${err}`);
+    console.log(`sendmailv3 Error: ${err}`);
     debugLog(
       '[PLACEHOLDER_DEBUG] sendMailv3 (email sending) error',
       JSON.stringify({ extUserId: extUserId || null, durationMs: Date.now() - startedAt, message: err?.message })

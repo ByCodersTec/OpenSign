@@ -129,6 +129,7 @@ export async function getSignedUrl(request) {
           return url;
         }
       } catch (err) {
+        console.log('Err in presigned url', err);
         debugLog(
           '[PLACEHOLDER_DEBUG] getSignedUrl (cloud function) error',
           JSON.stringify({ docId, templateId, message: err?.message })

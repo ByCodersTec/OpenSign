@@ -1,5 +1,11 @@
+import { debugLog } from '../../Utils.js';
 async function getUserDetails(request) {
   const reqEmail = request.params.email;
+  const requestUserId = request?.user?.id || null;
+  debugLog(
+    '[PLACEHOLDER_DEBUG] getUserDetails start',
+    JSON.stringify({ requestUserId, hasReqEmail: !!reqEmail, userId: request.params.userId || null })
+  );
   if (reqEmail || request.user) {
     try {
       const userId = request.params.userId;
@@ -21,6 +27,7 @@ async function getUserDetails(request) {
         userQuery.equalTo('CreatedBy', { __type: 'Pointer', className: '_User', objectId: userId });
       }
       const res = await userQuery.first({ useMasterKey: true });
+      debugLog('[PLACEHOLDER_DEBUG] getUserDetails end', JSON.stringify({ requestUserId, found: !!res }));
       if (res) {
         if (reqEmail) {
           return { objectId: res.id };
@@ -31,12 +38,17 @@ async function getUserDetails(request) {
         return '';
       }
     } catch (err) {
-      console.log('Err ', err);
+      debugLog(
+        '[PLACEHOLDER_DEBUG] getUserDetails error',
+        JSON.stringify({ requestUserId, message: err?.message })
+      );
+      debugLog(err?.stack);
       const code = err?.code || 400;
       const msg = err?.message || 'Something went wrong.';
       throw new Parse.Error(code, msg);
     }
   } else {
+    debugLog('[PLACEHOLDER_DEBUG] getUserDetails: no email and no authenticated user');
     throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, 'User is not authenticated.');
   }
 }

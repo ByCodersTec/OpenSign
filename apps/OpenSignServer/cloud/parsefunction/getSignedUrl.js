@@ -1,6 +1,6 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl as presign } from '@aws-sdk/s3-request-presigner';
-import { useLocal } from '../../Utils.js';
+import { useLocal, debugLog } from '../../Utils.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { isAuthenticated } from '../../utils/AuthUtils.js';
@@ -44,21 +44,52 @@ function makeS3Client() {
 
 export default async function getPresignedUrl(url) {
   if (url?.includes('/files/')) {
+    debugLog('[PLACEHOLDER_DEBUG] getPresignedUrl: using local file adapter path');
     return presignedlocalUrl(url);
   } else {
+    debugLog(
+      '[PLACEHOLDER_DEBUG] getPresignedUrl: building S3 client',
+      JSON.stringify({
+        hasAccessKeyId: !!process.env.DO_ACCESS_KEY_ID,
+        hasSecretAccessKey: !!process.env.DO_SECRET_ACCESS_KEY,
+        region: process.env.DO_REGION || null,
+        endpoint: makeEndpoint(process.env.DO_ENDPOINT) || null,
+        bucket: process.env.DO_SPACE || null,
+      })
+    );
     const client = makeS3Client();
 
     const bucket = process.env.DO_SPACE;
 
     const key = extractKeyFromUrl(url);
 
+    debugLog('[PLACEHOLDER_DEBUG] getPresignedUrl: extracted key', JSON.stringify({ key }));
+
     const command = new GetObjectCommand({ Bucket: bucket, Key: key });
     // Expires: 160 seconds
     const expiresIn = 160;
 
-    // presignedGETURL return presignedUrl with expires time
-    const presignedGETURL = await presign(client, command, { expiresIn });
-    return presignedGETURL;
+    const startedAt = Date.now();
+    try {
+      // presignedGETURL return presignedUrl with expires time
+      // NOTE: this call itself does not hit the network for SigV4 presigning, but if
+      // explicit credentials are missing the AWS SDK credential provider chain can fall
+      // back to IMDS/metadata lookups which DO hit the network and can hang for a long
+      // time on non-AWS hosts (e.g. DigitalOcean App Platform).
+      const presignedGETURL = await presign(client, command, { expiresIn });
+      debugLog(
+        '[PLACEHOLDER_DEBUG] getPresignedUrl: presign succeeded',
+        JSON.stringify({ key, durationMs: Date.now() - startedAt })
+      );
+      return presignedGETURL;
+    } catch (err) {
+      debugLog(
+        '[PLACEHOLDER_DEBUG] getPresignedUrl: presign failed',
+        JSON.stringify({ key, durationMs: Date.now() - startedAt, message: err?.message })
+      );
+      debugLog(err?.stack);
+      throw err;
+    }
   }
 }
 
@@ -98,7 +129,11 @@ export async function getSignedUrl(request) {
           return url;
         }
       } catch (err) {
-        console.log('Err in presigned url', err);
+        debugLog(
+          '[PLACEHOLDER_DEBUG] getSignedUrl (cloud function) error',
+          JSON.stringify({ docId, templateId, message: err?.message })
+        );
+        debugLog(err?.stack);
         throw err;
       }
     } else {

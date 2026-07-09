@@ -17,6 +17,14 @@ dotenv.config({ quiet: true });
 
 export const cloudServerUrl = 'http://localhost:8080/app';
 export const serverAppId = process.env.APP_ID || 'opensign';
+// Gate for the [PLACEHOLDER_DEBUG] instrumentation added around the document
+// upload / placeholder preparation flow. Set DEBUG_LOGS=TRUE to enable.
+export const isDebugLogsEnabled = (process.env.DEBUG_LOGS || '').toUpperCase() === 'TRUE';
+export const debugLog = (...args) => {
+  if (isDebugLogsEnabled) {
+    console.log(...args);
+  }
+};
 export const appName = 'OpenSign™';
 export const prefillDraftDocWidget = ['date', 'textbox', 'checkbox', 'radio button', 'image'];
 export const prefillDraftTemWidget = [
@@ -164,7 +172,18 @@ export function generateId(length) {
  * @returns {Promise<Uint8Array>} flatPdf - pdf file in Uint8Array
  */
 export const flattenPdf = async pdfFile => {
-  const pdfDoc = await PDFDocument.load(pdfFile, { ignoreEncryption: true });
+  debugLog(
+    '[PLACEHOLDER_DEBUG] flattenPdf (PDF processing) start',
+    JSON.stringify({ inputLength: pdfFile?.length ?? pdfFile?.byteLength ?? 0 })
+  );
+  let pdfDoc;
+  try {
+    pdfDoc = await PDFDocument.load(pdfFile, { ignoreEncryption: true });
+  } catch (err) {
+    debugLog('[PLACEHOLDER_DEBUG] flattenPdf: PDFDocument.load error', JSON.stringify({ message: err?.message }));
+    debugLog(err?.stack);
+    throw err;
+  }
 
   try {
     const acroFormEntry = pdfDoc.catalog.get(PDFName.of('AcroForm'));
@@ -217,7 +236,12 @@ export const flattenPdf = async pdfFile => {
     // best effort cleanup
   }
 
-  return await pdfDoc.save({ useObjectStreams: false });
+  const result = await pdfDoc.save({ useObjectStreams: false });
+  debugLog(
+    '[PLACEHOLDER_DEBUG] flattenPdf (PDF processing) end',
+    JSON.stringify({ outputLength: result?.length ?? 0 })
+  );
+  return result;
 };
 
 /* ---- flattenPdf private helpers ---- */

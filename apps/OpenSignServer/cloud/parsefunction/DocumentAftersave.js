@@ -1,4 +1,6 @@
+import { debugLog } from '../../Utils.js';
 async function DocumentAftersave(request) {
+  const requestUserId = request?.user?.id || null;
   try {
     if (!request.original) {
       console.log('new entry is insert in contracts_Document ', request?.object?.id);
@@ -8,21 +10,36 @@ async function DocumentAftersave(request) {
       const folder = obj?.get?.('Type');
       const ip = request?.headers?.['x-real-ip'] || '';
       const originIp = obj?.get?.('OriginIp') || '';
-      if (createdAt) {
-        await updateDocumentMeta({ objId, createdAt, folder, ip, originIp });
-      }
-
       const signers = obj?.get?.('Signers');
       const hasSigners = Array.isArray(signers) && signers.length > 0;
+      debugLog(
+        '[PLACEHOLDER_DEBUG] DocumentAftersave (insert) start',
+        JSON.stringify({ documentId: objId, requestUserId, hasSigners, folder: folder || null })
+      );
+      if (createdAt) {
+        debugLog('[PLACEHOLDER_DEBUG] DocumentAftersave: updateDocumentMeta start', JSON.stringify({ documentId: objId }));
+        await updateDocumentMeta({ objId, createdAt, folder, ip, originIp });
+        debugLog('[PLACEHOLDER_DEBUG] DocumentAftersave: updateDocumentMeta end', JSON.stringify({ documentId: objId }));
+      }
+
       // update acl of New Document If There are signers present in array
       if (hasSigners) {
+        debugLog('[PLACEHOLDER_DEBUG] DocumentAftersave: updateAclDoc start', JSON.stringify({ documentId: objId }));
         await updateAclDoc(objId);
+        debugLog('[PLACEHOLDER_DEBUG] DocumentAftersave: updateAclDoc end', JSON.stringify({ documentId: objId }));
       } else if (objId && request?.user) {
+        debugLog('[PLACEHOLDER_DEBUG] DocumentAftersave: updateSelfDoc start', JSON.stringify({ documentId: objId }));
         await updateSelfDoc(objId);
+        debugLog('[PLACEHOLDER_DEBUG] DocumentAftersave: updateSelfDoc end', JSON.stringify({ documentId: objId }));
       }
+      debugLog('[PLACEHOLDER_DEBUG] DocumentAftersave (insert) end', JSON.stringify({ documentId: objId }));
     } else {
       if (request?.user) {
         const signers = request.object.get('Signers');
+        debugLog(
+          '[PLACEHOLDER_DEBUG] DocumentAftersave (update) start',
+          JSON.stringify({ documentId: request?.object?.id, requestUserId, hasSigners: !!(signers && signers.length > 0) })
+        );
         if (signers && signers.length > 0) {
           await updateAclDoc(request.object.id);
         } else {
@@ -30,10 +47,16 @@ async function DocumentAftersave(request) {
             await updateSelfDoc(request.object.id);
           }
         }
+        debugLog('[PLACEHOLDER_DEBUG] DocumentAftersave (update) end', JSON.stringify({ documentId: request?.object?.id }));
       }
     }
   } catch (err) {
-    console.log('err in aftersave of contracts_Document');
+    debugLog('err in aftersave of contracts_Document');
+    debugLog(
+      '[PLACEHOLDER_DEBUG] DocumentAftersave error',
+      JSON.stringify({ documentId: request?.object?.id, requestUserId, message: err?.message })
+    );
+    debugLog(err?.stack);
     console.log(err);
   }
 

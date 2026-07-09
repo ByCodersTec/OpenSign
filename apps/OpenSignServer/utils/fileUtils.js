@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { cloudServerUrl, serverAppId } from '../Utils.js';
+import { cloudServerUrl, serverAppId, debugLog } from '../Utils.js';
 
 function formatFixedDate(date = new Date()) {
   const dd = String(date.getDate()).padStart(2, '0');
@@ -80,6 +80,12 @@ export function buildDownloadFilename(formatId, ctx) {
 }
 
 export async function parseUploadFile(fileName, fileData, mimeType) {
+  const startedAt = Date.now();
+  const byteLength = fileData?.length ?? fileData?.byteLength ?? 0;
+  debugLog(
+    '[PLACEHOLDER_DEBUG] parseUploadFile (file adapter access) start',
+    JSON.stringify({ fileName, mimeType, byteLength, target: `${cloudServerUrl}/files/${fileName}` })
+  );
   try {
     const res = await axios.post(`${cloudServerUrl}/files/${fileName}`, fileData, {
       headers: {
@@ -89,12 +95,19 @@ export async function parseUploadFile(fileName, fileData, mimeType) {
       },
     });
 
-    // console.log('File uploaded:', res.data);
+    debugLog(
+      '[PLACEHOLDER_DEBUG] parseUploadFile (file adapter access) end',
+      JSON.stringify({ fileName, durationMs: Date.now() - startedAt })
+    );
     return res.data;
   } catch (err) {
-    const errorMessage = err?.response?.data?.error || 'Unknown error';
+    const errorMessage = err?.response?.data?.error || err?.message || 'Unknown error';
     const statusCode = err?.response?.status || 500;
-    console.log('Err in parseUploadFile', errorMessage);
+    debugLog(
+      '[PLACEHOLDER_DEBUG] parseUploadFile (file adapter access) error',
+      JSON.stringify({ fileName, durationMs: Date.now() - startedAt, statusCode, message: errorMessage })
+    );
+    debugLog(err?.stack);
     throw { message: errorMessage, code: statusCode };
   }
 }

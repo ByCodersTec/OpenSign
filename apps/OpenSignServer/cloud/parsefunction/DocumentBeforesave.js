@@ -1,4 +1,4 @@
-import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, MAX_NOTE_LENGTH } from '../../Utils.js';
+import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, MAX_NOTE_LENGTH, debugLog } from '../../Utils.js';
 import { setDocumentCount } from '../../utils/CountUtils.js';
 
 async function DocumentBeforesave(request) {
@@ -34,6 +34,10 @@ async function DocumentBeforesave(request) {
 
     // Check if SignedUrl field has been added (transition from undefined to defined)
     if (oldDocument && !oldDocument?.get('SignedUrl') && document?.get('SignedUrl')) {
+      debugLog(
+        '[PLACEHOLDER_DEBUG] DocumentBeforesave: SignedUrl transition detected',
+        JSON.stringify({ documentId: document?.id })
+      );
       if (oldDocument?.get('ExtUserPtr')?.id) {
         setDocumentCount(oldDocument?.get('ExtUserPtr')?.id);
       }
@@ -43,6 +47,11 @@ async function DocumentBeforesave(request) {
     }
   } catch (err) {
     console.log('err in document beforesave', err.message);
+    debugLog(
+      '[PLACEHOLDER_DEBUG] DocumentBeforesave error',
+      JSON.stringify({ documentId: request?.object?.id, message: err?.message })
+    );
+    debugLog(err?.stack);
   }
 }
 export default DocumentBeforesave;

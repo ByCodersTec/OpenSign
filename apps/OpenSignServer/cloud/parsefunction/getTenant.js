@@ -1,3 +1,4 @@
+import { debugLog } from '../../Utils.js';
 async function getTenantByUserId(userId, contactId) {
   try {
     if (contactId) {
@@ -11,11 +12,17 @@ async function getTenantByUserId(userId, contactId) {
           tenantCreditsQuery.equalTo('objectId', tenantId);
           tenantCreditsQuery.exclude('FileAdapters,PfxFile,ContactNumber');
           const res = await tenantCreditsQuery.first({ useMasterKey: true });
+          debugLog(
+            '[PLACEHOLDER_DEBUG] getTenant (via contactId) end',
+            JSON.stringify({ contactId, tenantId, found: !!res })
+          );
           return res;
         } else {
+          debugLog('[PLACEHOLDER_DEBUG] getTenant (via contactId) no tenantId on contact', JSON.stringify({ contactId }));
           return {};
         }
       } else {
+        debugLog('[PLACEHOLDER_DEBUG] getTenant contact not found', JSON.stringify({ contactId }));
         return {};
       }
     } else {
@@ -37,23 +44,35 @@ async function getTenantByUserId(userId, contactId) {
         }
         tenantQuery.exclude('FileAdapters,PfxFile');
         const res = await tenantQuery.first({ useMasterKey: true });
+        debugLog(
+          '[PLACEHOLDER_DEBUG] getTenant (via userId) end',
+          JSON.stringify({ userId, tenantId, found: !!res })
+        );
         return res;
       } else {
+        debugLog('[PLACEHOLDER_DEBUG] getTenant contracts_Users not found', JSON.stringify({ userId }));
         return {};
       }
     }
   } catch (err) {
     console.log('err in getTenant ', err);
+    debugLog(
+      '[PLACEHOLDER_DEBUG] getTenant error',
+      JSON.stringify({ userId, contactId, message: err?.message })
+    );
+    debugLog(err?.stack);
     return 'user does not exist!';
   }
 }
 export default async function getTenant(request) {
   const userId = request.params.userId || '';
   const contactId = request.params.contactId || '';
+  debugLog('[PLACEHOLDER_DEBUG] getTenant start', JSON.stringify({ userId, contactId }));
 
   if (userId || contactId) {
     return await getTenantByUserId(userId, contactId);
   } else {
+    debugLog('[PLACEHOLDER_DEBUG] getTenant missing userId/contactId params');
     return {};
   }
 }
